@@ -7,7 +7,7 @@ import  Link  from 'next/link';
 import Image from 'next/image';
 import markdownit from "markdown-it"
 import {Skeleton} from "@/components/ui/skeleton"
-import { View } from 'lucide-react';
+import View from '@/components/view';
 const md = markdownit()
 export const experimental_ppr = true
 
