@@ -113,7 +113,7 @@ const StartupForm = () => {
       <div>
         <label htmlFor="category" className="startup-form_label">
           Category
-        </label>
+        </label>useR
         <Input
           id="category"
           name="category"
