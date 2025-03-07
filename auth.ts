@@ -5,17 +5,26 @@ import { client } from "@/sanity/lib/client";
 import { writeClient } from "@/sanity/lib/write-client";
 
 export const { handlers, auth, signIn, signOut } = NextAuth({
-  providers: [GitHub],
+  providers: [
+    GitHub({
+      clientId: process.env.AUTH_SECRET_ID,
+      clientSecret: process.env.AUTH_GITHUB_SECRET,
+    }),
+  ],
   callbacks: {
-    async signIn({
-      user: { name, email, image },
-      profile: { id, login, bio },
-    }) {
+    async signIn({ user, profile }) {
+      console.log("GitHub Profile Data:", profile); // Debugging
+
+      if (!profile) return false; // Prevent errors if profile is missing
+
+      const { name, email, image } = user;
+      const id = profile?.id || profile?.sub;
+      const login = profile?.login || profile?.name || "defaultUsername";
+      const bio = profile?.bio || "";
+
       const existingUser = await client
         .withConfig({ useCdn: false })
-        .fetch(AUTHOR_BY_GITHUB_ID_QUERY, {
-          id,
-        });
+        .fetch(AUTHOR_BY_GITHUB_ID_QUERY, { id });
 
       if (!existingUser) {
         await writeClient.create({
@@ -25,7 +34,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
           username: login,
           email,
           image,
-          bio: bio || "",
+          bio,
         });
       }
 
@@ -36,12 +45,11 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         const user = await client
           .withConfig({ useCdn: false })
           .fetch(AUTHOR_BY_GITHUB_ID_QUERY, {
-            id: profile?.id,
+            id: profile?.sub || profile?.id,
           });
 
         token.id = user?._id;
       }
-
       return token;
     },
     async session({ session, token }) {
